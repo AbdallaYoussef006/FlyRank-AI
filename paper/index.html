@@ -1,1 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>Predicting Content Performance Decline | Abdalla Mohamed</title>
+
+<style>
+    :root {
+        --bg: #f7f8fa;
+        --card: #ffffff;
+        --text: #18202a;
+        --muted: #667085;
+        --line: #e4e7ec;
+        --accent: #315efb;
+        --accent-soft: #eef3ff;
+        --success: #087443;
+        --warning: #b54708;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                     Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.7;
+    }
+
+    .container {
+        width: min(1100px, calc(100% - 40px));
+        margin: auto;
+    }
+
+    header {
+        background: white;
+        border-bottom: 1px solid var(--line);
+        padding: 72px 0 64px;
+    }
+
+    .eyebrow {
+        color: var(--accent);
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 18px;
+    }
+
+    h1 {
+        max-width: 900px;
+        font-size: clamp(2.4rem, 6vw, 4.5rem);
+        line-height: 1.08;
+        letter-spacing: -0.04em;
+        margin: 0 0 22px;
+    }
+
+    .subtitle {
+        max-width: 760px;
+        font-size: 1.2rem;
+        color: var(--muted);
+        margin-bottom: 28px;
+    }
+
+    .author {
+        font-weight: 600;
+    }
+
+    nav {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(255,255,255,0.96);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(8px);
+    }
+
+    nav .container {
+        display: flex;
+        gap: 22px;
+        overflow-x: auto;
+        padding: 14px 0;
+    }
+
+    nav a {
+        color: var(--muted);
+        text-decoration: none;
+        white-space: nowrap;
+        font-size: 0.9rem;
+    }
+
+    nav a:hover {
+        color: var(--accent);
+    }
+
+    main {
+        padding: 56px 0 90px;
+    }
+
+    section {
+        margin-bottom: 64px;
+        scroll-margin-top: 80px;
+    }
+
+    h2 {
+        font-size: 1.8rem;
+        letter-spacing: -0.02em;
+        margin: 0 0 18px;
+    }
+
+    h3 {
+        margin-top: 30px;
+    }
+
+    p {
+        max-width: 850px;
+    }
+
+    .abstract {
+        background: var(--accent-soft);
+        border: 1px solid #dbe4ff;
+        border-radius: 18px;
+        padding: 28px;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin: 28px 0;
+    }
+
+    .stat {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 22px;
+    }
+
+    .stat .value {
+        font-size: 1.9rem;
+        font-weight: 750;
+        letter-spacing: -0.03em;
+    }
+
+    .stat .label {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 4px;
+    }
+
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+    }
+
+    .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 24px;
+    }
+
+    .card h3 {
+        margin-top: 0;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        margin: 24px 0;
+    }
+
+    th, td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+    }
+
+    th {
+        background: #f9fafb;
+        font-weight: 700;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    .callout {
+        border-left: 4px solid var(--accent);
+        background: white;
+        border-radius: 0 12px 12px 0;
+        padding: 18px 22px;
+        margin: 24px 0;
+    }
+
+    .recommendation {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 18px;
+        padding: 22px 0;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .rank {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--accent-soft);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+    }
+
+    .recommendation h3 {
+        margin: 0 0 5px;
+    }
+
+    .muted {
+        color: var(--muted);
+    }
+
+    code {
+        background: #eef0f3;
+        padding: 2px 6px;
+        border-radius: 5px;
+        font-size: 0.9em;
+    }
+
+    footer {
+        background: #ffffff;
+        border-top: 1px solid var(--line);
+        padding: 35px 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 800px) {
+        .stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .card-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 500px) {
+        .container {
+            width: min(100% - 26px, 1100px);
+        }
+
+        .stats {
+            grid-template-columns: 1fr;
+        }
+
+        header {
+            padding: 48px 0;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="container">
+        <div class="eyebrow">Search Intelligence · Machine Learning</div>
+
+        <h1>
+            Predicting Content Performance Decline from Search Intelligence Signals
+        </h1>
+
+        <p class="subtitle">
+            A client-held-out machine learning analysis of whether current-month
+            search performance signals can help identify content likely to
+            experience an impressions decline in the following month.
+        </p>
+
+        <div class="author">Abdalla Mohamed</div>
+        <div class="muted">Google Search Ranking & Discoverability Capstone</div>
+    </div>
+</header>
+
+<nav>
+    <div class="container">
+        <a href="#abstract">Abstract</a>
+        <a href="#problem">Problem</a>
+        <a href="#data">Data</a>
+        <a href="#method">Methodology</a>
+        <a href="#results">Results</a>
+        <a href="#errors">Errors</a>
+        <a href="#limitations">Limitations</a>
+        <a href="#recommendations">Recommendations</a>
+        <a href="#repro">Reproducibility</a>
+    </div>
+</nav>
+
+<main>
+<div class="container">
+
+<section id="abstract">
+    <h2>Abstract</h2>
+
+    <div class="abstract">
+        <p>
+            This study asks whether current-month search performance signals
+            can help identify content likely to experience a meaningful
+            impressions decline in the following month. A monthly content-level
+            dataset was constructed from the FlyRank search warehouse using
+            impressions, clicks, CTR, average position, scroll events, and
+            AI-session activity as predictive features. A Random Forest was
+            evaluated using a client-grouped holdout in which 52 clients were
+            used for training and 14 unseen clients were reserved for testing.
+            The model achieved 60.28% accuracy, 49.42% precision, 61.17%
+            recall, and a 54.67% F1 score, while a simple always-decline
+            baseline achieved 39.16% accuracy and 56.28% F1. The results provide
+            directional evidence that the measured signals contain useful
+            predictive information, but the model should be treated as
+            decision support rather than proof of causality or Google's ranking
+            mechanism.
+        </p>
+    </div>
+</section>
+
+<section id="problem">
+    <h2>Introduction / Problem Statement</h2>
+
+    <p>
+        Content teams need a practical way to prioritize pages for review when
+        search visibility may be weakening. Reviewing every page equally is
+        inefficient, so this project investigates whether observable search
+        performance signals can be used to rank content for review.
+    </p>
+
+    <p>
+        The research question is:
+    </p>
+
+    <div class="callout">
+        <strong>
+            Can current-month search performance signals identify content that
+            is likely to experience an impressions decline in the following month?
+        </strong>
+    </div>
+
+    <p>
+        The intended output is not an automated decision maker. It is a
+        prioritization signal that can support content monitoring and review.
+    </p>
+</section>
+
+<section id="data">
+    <h2>Data</h2>
+
+    <p>
+        The analysis uses the full FlyRank warehouse release and its
+        daily content-performance data. The available release contains
+        78,835,655 rows, 70 clients, and 427,292 content records spanning
+        January 27, 2025 through June 30, 2026.
+    </p>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="value">78.8M</div>
+            <div class="label">Warehouse rows</div>
+        </div>
+
+        <div class="stat">
+            <div class="value">70</div>
+            <div class="label">Clients</div>
+        </div>
+
+        <div class="stat">
+            <div class="value">427K</div>
+            <div class="label">Content records</div>
+        </div>
+
+        <div class="stat">
+            <div class="value">17 mo.</div>
+            <div class="label">Approx. data window</div>
+        </div>
+    </div>
+
+    <p>
+        The modeling data was aggregated to monthly content-level observations,
+        producing 1,329,512 modeling rows across 66 clients and 288,308 content
+        records.
+    </p>
+
+    <p>
+        The model uses current-month impressions, clicks, CTR, average position,
+        scroll events, and AI-session activity. The next month's impressions
+        are used only to construct the outcome label.
+    </p>
+
+    <p>
+        Client and content identifiers are anonymized. No client names,
+        domains, URLs, private queries, credentials, or raw exports are
+        exposed in this paper.
+    </p>
+</section>
+
+<section id="method">
+    <h2>Methodology</h2>
+
+    <h3>Target definition</h3>
+
+    <p>
+        The target represents a meaningful decline in impressions from the
+        current month to the following month. An observation is labeled as a
+        decline when the following month's impressions are at most 70% of the
+        current month's impressions.
+    </p>
+
+    <h3>Features</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>avg_position</code></td>
+                <td>Search-position signal</td>
+            </tr>
+            <tr>
+                <td><code>impressions</code></td>
+                <td>Visibility signal</td>
+            </tr>
+            <tr>
+                <td><code>ctr</code></td>
+                <td>Click-through signal</td>
+            </tr>
+            <tr>
+                <td><code>clicks</code></td>
+                <td>Click-volume signal</td>
+            </tr>
+            <tr>
+                <td><code>scroll_events</code></td>
+                <td>Engagement signal</td>
+            </tr>
+            <tr>
+                <td><code>sessions_ai</code></td>
+                <td>AI-session activity signal</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Validation design</h3>
+
+    <p>
+        A client-grouped train/test split was used. The training set contains
+        1,124,959 rows from 52 clients, while the test set contains 204,553
+        rows from 14 clients. No client appears in both sets.
+    </p>
+
+    <p>
+        This design evaluates whether the model can generalize to clients that
+        were not present during training. The same split was used for the
+        baseline and Random Forest.
+    </p>
+
+    <h3>Model</h3>
+
+    <p>
+        A Random Forest classifier was trained with 100 trees, a maximum depth
+        of 12, a fixed random seed, parallel processing, and balanced class
+        weights.
+    </p>
+
+    <h3>Leakage audit</h3>
+
+    <p>
+        The model feature list was explicitly checked against the future
+        outcome and target columns. Neither
+        <code>next_month_impressions</code> nor
+        <code>decline_label</code> was present among the model features.
+        The leakage audit returned <strong>PASS</strong>.
+    </p>
+</section>
+
+<section id="results">
+    <h2>Results</h2>
+
+    <p>
+        The Random Forest produced measured predictive signal on the
+        client-held-out test set. However, it did not outperform the simple
+        baseline on every metric.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>Baseline</th>
+                <th>Random Forest</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                <td>Accuracy</td>
+                <td>39.16%</td>
+                <td><strong>60.28%</strong></td>
+            </tr>
+
+            <tr>
+                <td>Precision</td>
+                <td>39.16%</td>
+                <td><strong>49.42%</strong></td>
+            </tr>
+
+            <tr>
+                <td>Recall</td>
+                <td><strong>100.00%</strong></td>
+                <td>61.17%</td>
+            </tr>
+
+            <tr>
+                <td>F1</td>
+                <td><strong>56.28%</strong></td>
+                <td>54.67%</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout">
+        <strong>Interpretation:</strong>
+        The Random Forest improved accuracy and precision relative to the
+        simple baseline, while the baseline retained higher recall and a
+        slightly higher F1 score. Therefore, the Random Forest should not be
+        described as universally superior.
+    </div>
+
+    <h3>Feature importance</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>Importance</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                <td>Average position</td>
+                <td>27.51%</td>
+            </tr>
+
+            <tr>
+                <td>Impressions</td>
+                <td>25.30%</td>
+            </tr>
+
+            <tr>
+                <td>CTR</td>
+                <td>22.56%</td>
+            </tr>
+
+            <tr>
+                <td>Clicks</td>
+                <td>15.81%</td>
+            </tr>
+
+            <tr>
+                <td>Scroll events</td>
+                <td>8.37%</td>
+            </tr>
+
+            <tr>
+                <td>AI sessions</td>
+                <td>0.45%</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>
+        Average position, impressions, CTR, and clicks accounted for the
+        largest shares of Random Forest feature importance. Feature importance
+        describes how the fitted model used these variables; it should not be
+        interpreted as evidence that any feature causes future performance.
+    </p>
+</section>
+
+<section id="errors">
+    <h2>Error Analysis</h2>
+
+    <p>
+        The model produced 50,151 false positives and 31,105 false negatives
+        on the held-out test set.
+    </p>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="value">50,151</div>
+            <div class="label">False positives</div>
+        </div>
+
+        <div class="stat">
+            <div class="value">31,105</div>
+            <div class="label">False negatives</div>
+        </div>
+
+        <div class="stat">
+            <div class="value">1,623</div>
+            <div class="label">Avg. FP impressions</div>
+        </div>
+
+        <div class="stat">
+            <div class="value">1,493</div>
+            <div class="label">Avg. FN impressions</div>
+        </div>
+    </div>
+
+    <p>
+        False positives had an average position of 23.67, while false
+        negatives had an average position of 17.10. These examples show that
+        the classifier can both flag content that does not subsequently meet
+        the decline definition and miss some genuine declines.
+    </p>
+
+    <p>
+        The errors reinforce the role of the model as a review-prioritization
+        tool rather than a definitive classifier.
+    </p>
+</section>
+
+<section id="limitations">
+    <h2>Limitations & Honest Framing</h2>
+
+    <div class="card-grid">
+        <div class="card">
+            <h3>Predictive, not causal</h3>
+            <p>
+                The analysis measures predictive associations. It does not
+                establish that any signal causes a future impressions decline.
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>Client-based validation</h3>
+            <p>
+                The evaluation holds out clients rather than simulating a
+                future time period. It therefore tests generalization to
+                unseen clients.
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>Feature coverage</h3>
+            <p>
+                Many factors that may influence future search performance are
+                not represented by the selected features.
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>Baseline trade-off</h3>
+            <p>
+                The baseline achieved higher recall and slightly higher F1,
+                so the Random Forest is not universally better.
+            </p>
+        </div>
+    </div>
+
+    <div class="callout">
+        <strong>Safe framing:</strong>
+        The findings are <em>observed</em> and <em>measured</em> signals that
+        can support content-review decisions. They should not be presented as
+        proof of Google's ranking algorithm or causal refresh impact.
+    </div>
+</section>
+
+<section id="recommendations">
+    <h2>Ranked Recommendations</h2>
+
+    <div class="recommendation">
+        <div class="rank">1</div>
+        <div>
+            <h3>Review weaker average-position signals</h3>
+            <p>
+                Average position was the most important feature in the fitted
+                model. Content showing weaker search positions can be
+                prioritized for review and monitoring.
+            </p>
+        </div>
+    </div>
+
+    <div class="recommendation">
+        <div class="rank">2</div>
+        <div>
+            <h3>Prioritize visible content showing deterioration</h3>
+            <p>
+                Impressions were the second most important feature. Content
+                with meaningful existing visibility can be useful candidates
+                for proactive review.
+            </p>
+        </div>
+    </div>
+
+    <div class="recommendation">
+        <div class="rank">3</div>
+        <div>
+            <h3>Investigate CTR opportunities</h3>
+            <p>
+                CTR represented a substantial share of model importance.
+                Visible content with weaker click-through performance can be
+                reviewed for metadata, search-intent alignment, and content
+                presentation.
+            </p>
+        </div>
+    </div>
+
+    <div class="recommendation">
+        <div class="rank">4</div>
+        <div>
+            <h3>Monitor click-volume changes</h3>
+            <p>
+                Clicks provided additional predictive information beyond
+                impressions and CTR. Click changes should be interpreted
+                together with visibility and position.
+            </p>
+        </div>
+    </div>
+
+    <div class="recommendation">
+        <div class="rank">5</div>
+        <div>
+            <h3>Use engagement as supporting evidence</h3>
+            <p>
+                Scroll events contributed to the model but were less important
+                than the main search-performance signals, making them more
+                appropriate as secondary evidence.
+            </p>
+        </div>
+    </div>
+
+    <div class="recommendation">
+        <div class="rank">6</div>
+        <div>
+            <h3>Monitor AI-session activity cautiously</h3>
+            <p>
+                AI-session activity had very low feature importance in this
+                model and should therefore not drive prioritization on its own.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section id="repro">
+    <h2>Reproducibility</h2>
+
+    <p>
+        The analysis was developed using Python, DuckDB, pandas, and
+        scikit-learn. DuckDB was used to query the FlyRank warehouse directly
+        rather than downloading the entire release.
+    </p>
+
+    <p>
+        The complete capstone notebook is available in the project repository:
+    </p>
+
+    <p>
+        <a href="https://github.com/AbdallaYoussef006/FlyRank-AI/blob/main/work/notebooks/capstone.ipynb"
+           target="_blank">
+            View the capstone notebook on GitHub
+        </a>
+    </p>
+
+    <p>
+        The repository contains the weekly work and capstone artifacts used
+        to produce this analysis.
+    </p>
+</section>
+
+<section id="acknowledgments">
+    <h2>Acknowledgments & Data Credit</h2>
+
+    <p>
+        Built on the FlyRank ML Internship dataset.
+    </p>
+
+    <p>
+        This project was completed as part of the FlyRank ML Internship
+        Machine Learning track. The analysis uses the anonymized search
+        performance warehouse provided for the internship.
+    </p>
+
+    <p>
+        Data source:
+        <a href="https://flyrank.ai" target="_blank">FlyRank</a>
+    </p>
+</section>
+
+</div>
+</main>
+
+<footer>
+    <div class="container">
+        <strong>Abdalla Mohamed</strong><br>
+        Google Search Ranking & Discoverability Capstone · Machine Learning
+    </div>
+</footer>
+
+</body>
+</html>
